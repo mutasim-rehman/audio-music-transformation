@@ -1,0 +1,28 @@
+# Audio Style Projection - Dependencies
+# Core audio processing
+librosa>=0.10.1
+soundfile>=0.12.1
+numpy>=2.0.0,<2.4
+scipy>=1.13.0
+
+# Machine learning & linear algebra
+scikit-learn>=1.5.0
+torch>=2.4.0
+torchaudio>=2.4.0
+
+# Visualization
+matplotlib>=3.9.0
+IPython>=8.26.0
+
+# Jupyter for interactive exploration
+jupyter>=1.0.0
+ipywidgets>=8.1.1
+
+# Audio playback in notebooks
+pydub>=0.25.1
+
+# Progress bars
+tqdm>=4.66.1
+
+# Optional: Neural vocoder support (uncomment if needed)
+# ddsp>=3.0.0
