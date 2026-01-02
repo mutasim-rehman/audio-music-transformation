@@ -251,6 +251,110 @@ def normalize_audio(y: np.ndarray, target_db: float = -3.0) -> np.ndarray:
     return y
 
 
+def generate_harmonics_from_noise(
+    y_noise: np.ndarray,
+    f0_contour: np.ndarray,
+    times_f0: np.ndarray,
+    sr: int = 22050,
+    n_harmonics: int = 10,
+    harmonic_rolloff: float = 0.7
+) -> np.ndarray:
+    """
+    Generate harmonic tones from noise using the noise's spectral characteristics.
+    
+    This is the secret sauce for making ambient sounds "sing"!
+    
+    Parameters
+    ----------
+    y_noise : np.ndarray
+        Source noise signal (clouds, wind, rain, etc.)
+    f0_contour : np.ndarray
+        Fundamental frequency over time (the melody)
+    times_f0 : np.ndarray
+        Time stamps for f0_contour
+    sr : int
+        Sample rate
+    n_harmonics : int
+        Number of harmonics to generate
+    harmonic_rolloff : float
+        How quickly harmonics decay (0.5-1.0)
+    
+    Returns
+    -------
+    y_harmonic : np.ndarray
+        Synthesized harmonic signal colored by the noise texture
+    
+    LEARNING:
+    ---------
+    The key insight: noise contains ALL frequencies, just randomly.
+    By selectively extracting and amplifying frequencies at harmonic 
+    intervals, we can make the noise "sing" at a specific pitch!
+    
+    It's like the noise is a radio tuned to static, and we're 
+    adjusting it to pick up specific stations (pitches).
+    """
+    from scipy.interpolate import interp1d
+    from scipy.signal import butter, filtfilt
+    
+    n_samples = len(y_noise)
+    t = np.arange(n_samples) / sr
+    
+    # Interpolate pitch contour to sample rate
+    f0_interp = interp1d(
+        times_f0, f0_contour,
+        kind='linear', fill_value=0, bounds_error=False
+    )
+    f0_at_samples = f0_interp(t)
+    
+    # Compute spectral envelope of noise (its "color")
+    S_noise = librosa.stft(y_noise, n_fft=2048, hop_length=512)
+    noise_spectrum = np.mean(np.abs(S_noise), axis=1)
+    noise_spectrum = noise_spectrum / (np.max(noise_spectrum) + 1e-10)
+    freq_bins = librosa.fft_frequencies(sr=sr, n_fft=2048)
+    
+    # Additive synthesis with texture coloring
+    y_harmonic = np.zeros(n_samples)
+    
+    # Process in blocks for efficiency
+    block_size = 512
+    n_blocks = n_samples // block_size
+    
+    # Phase accumulators for smooth synthesis
+    phases = np.zeros(n_harmonics)
+    
+    for block in range(n_blocks):
+        start = block * block_size
+        end = start + block_size
+        
+        # Get average pitch for this block
+        f0_block = np.mean(f0_at_samples[start:end])
+        
+        if f0_block > 20:  # Only synthesize if there's a valid pitch
+            for h in range(n_harmonics):
+                harmonic_freq = f0_block * (h + 1)
+                
+                if harmonic_freq < sr / 2:
+                    # Get spectral weight from noise
+                    idx = np.argmin(np.abs(freq_bins - harmonic_freq))
+                    texture_weight = noise_spectrum[min(idx, len(noise_spectrum)-1)]
+                    
+                    # Harmonic amplitude with natural rolloff
+                    amplitude = (1.0 / ((h + 1) ** harmonic_rolloff)) * texture_weight
+                    
+                    # Smooth phase evolution
+                    phase_inc = 2 * np.pi * harmonic_freq / sr
+                    block_phases = phases[h] + np.arange(block_size) * phase_inc
+                    phases[h] = (phases[h] + block_size * phase_inc) % (2 * np.pi)
+                    
+                    y_harmonic[start:end] += amplitude * np.sin(block_phases)
+    
+    # Normalize
+    if np.max(np.abs(y_harmonic)) > 0:
+        y_harmonic = y_harmonic / np.max(np.abs(y_harmonic))
+    
+    return y_harmonic
+
+
 def apply_reverb(
     y: np.ndarray,
     sr: int = 22050,
