@@ -75,7 +75,42 @@ Place your audio files in the `samples/` folder:
 - `samples/source_clouds.wav` (or any ambient sound)
 - `samples/target_elvis.wav` (or any vocal performance)
 
-### 3. Run the Notebooks
+### 3. Quick Start — CLI
+
+The fastest way to run a transformation:
+
+```bash
+python main.py --base samples/source_clouds.wav \
+               --projected samples/target_elvis.wav \
+               --output outputs/result.wav \
+               --alpha 0.7 \
+               --preset balanced
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--base` | *(required)* | Path to base / environmental audio |
+| `--projected` | *(required)* | Path to vocal / musical audio |
+| `--output` | `outputs/output.wav` | Where to save the result |
+| `--alpha` | `0.7` | Blend strength (0 = pure base, 1 = max singing) |
+| `--preset` | `balanced` | `balanced`, `more-source`, or `more-singing` |
+| `--sr` | `22050` | Sample rate |
+
+### 4. Quick Start — Python API
+
+```python
+from src.pipeline import transform_audio
+
+y_out, info = transform_audio(
+    base_path="samples/source_clouds.wav",
+    projected_path="samples/target_elvis.wav",
+    output_path="outputs/clouds_singing_elvis.wav",
+    alpha=0.7,
+    preset="balanced",
+)
+```
+
+### 5. Notebooks (deep dive)
 
 ```bash
 jupyter notebook notebooks/

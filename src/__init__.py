@@ -9,8 +9,9 @@ from .analysis import compute_stft, compute_mel_spectrogram, extract_pitch, extr
 from .transform import spectral_modulation, envelope_transfer, style_projection
 from .synthesis import reconstruct_audio, apply_vocoder
 from .visualization import plot_waveform, plot_spectrogram, plot_pitch_contour
+from .pipeline import transform_audio, PRESETS
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "load_audio",
     "save_audio", 
@@ -27,5 +28,7 @@ __all__ = [
     "plot_waveform",
     "plot_spectrogram",
     "plot_pitch_contour",
+    "transform_audio",
+    "PRESETS",
 ]
 
